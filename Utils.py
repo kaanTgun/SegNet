@@ -1,8 +1,6 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-import torchsummary
-
 from skimage import io, transform
 import scipy
 import numpy as np
@@ -27,7 +25,6 @@ def pad_to_square(img, pad_value):
 class Structured_Dataset(Dataset):
       
   def __init__(self, txt_file, root_dir, image_size):
-
     with open(txt_file, "r" ) as f:
       self.file_data = f.readlines()
 

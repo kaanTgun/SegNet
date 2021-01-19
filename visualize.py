@@ -47,3 +47,4 @@ def testModel(dataObj, index):
   for j in range(22):
     visualize2(img, s[j], m[j], l[j], s_pred[j], m_pred[j], l_pred[j])
     k = np.array(s[j])
+
