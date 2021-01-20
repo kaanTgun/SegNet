@@ -87,13 +87,16 @@ class conv_block(nn.Module):
 class SegNet(nn.Module):
   def __init__(self, D_in, D_out):
     super().__init__()
+    """ Segnet is a derivation of ResNet-50 and UNet.
+    Network is design to output 3 prediction maps S,M,L fromthe different sections of the network
+    """
 
     # D_in: 3-channels
     # D_out: # of segmentations
 
     self.header = nn.Sequential(nn.Conv2d(in_channels= D_in, out_channels= 128, kernel_size=7, stride=1, padding=3),\
-                  nn.BatchNorm2d(128),\
-                  nn.ReLU())
+                                nn.BatchNorm2d(128),\
+                                nn.ReLU())
     self.identity_1_1 = identity_block(in_channels=128, filters=[128,256,128])
     self.identity_1_2 = identity_block(128, [256,512,128,D_out], output=True )
 
@@ -129,6 +132,7 @@ class SegNet(nn.Module):
     self.prelu = nn.PReLU()
 
   def forward(self, x):
+        
     y = self.header(x)
     y = self.identity_1_1(y)
     y, out_cnt_1_1 = self.identity_1_2(y)

@@ -32,7 +32,7 @@ if __name__ == "__main__":
 	img_Size = 180
 
 	OUTPUT_PATH 	= "Model"
-	LOG_LOSS_DIR = "Loss"
+	LOG_LOSS_DIR 	= "Loss"
 	LOG_LOSS_T_PATH = "Loss/Train"
 	LOG_LOSS_V_PATH = "Loss/Validate"
 	SAVE_MODEL_EVERY_N_EPOC = 2
@@ -97,8 +97,8 @@ if __name__ == "__main__":
 
 		writer.flush()
 	
-	OUTPUT_path = f'{OUTPUT_PATH}/Weights_{epoch}_loss_{loss}.pt'
 	if n % SAVE_MODEL_EVERY_N_EPOC == 0:
+    	OUTPUT_path = f'{OUTPUT_PATH}/Weights_{epoch}_loss_{loss}.pt'
 		torch.save(model, OUTPUT_path)
 
 	print("__done__")

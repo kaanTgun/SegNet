@@ -12,6 +12,17 @@ import cv2
 
 
 def pad_to_square(img, pad_value):
+  """ Every input image passed through the network needs to be square, 
+  This function adds padding around the cropped if the image is not a perfect square
+
+  Args:
+      img (np_tensor): original RGB image
+      pad_value (int): the pixal value passed is the padding
+
+  Returns:
+      image, padding : return a tuple of already padded image and padding, 
+                        padding is needed to offset the annotations wrt padding
+  """
   c, h, w = img.shape
   dim_diff = np.abs(h - w)
   # (upper / left) padding and (lower / right) padding
@@ -39,7 +50,8 @@ class Structured_Dataset(Dataset):
   def __getitem__(self, idx):
 
     idx_data = json.loads(self.file_data[idx])
-    img = cv2.imread(os.path.join(self.image_dir, idx_data['imgpath']))
+    img_path = os.path.join(self.image_dir, idx_data['imgpath'])
+    img = cv2.imread(img_path)
     h, w, _ = img.shape
 
     x1,y1,w,h = idx_data['bbox']                                             # Crop Hand from the image 
@@ -73,6 +85,7 @@ class Structured_Dataset(Dataset):
         mat_m[j][int(y/2)][int(x/2)] = 1
         mat_l[j][y][x]               = 1
       except IndexError:
+        print(f"IndexError: {img_path}, (x,y):{x},{y}")
         pass
 
       mat_s[j,:,:] = scipy.ndimage.gaussian_filter(np.array(mat_s[j,:,:]), sigma = 2)*30
