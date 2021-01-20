@@ -1,5 +1,6 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
+from torch import nn
 
 from skimage import io, transform
 import scipy
@@ -67,9 +68,12 @@ class Structured_Dataset(Dataset):
       x, y = x+pad[0], y+pad[2]                                              # Joint wrt added padding 
       x, y = int(x*img_sf_w), int(y*img_sf_h)
 
-      mat_s[j][int(y/4)][int(x/4)] = 1
-      mat_m[j][int(y/2)][int(x/2)] = 1
-      mat_l[j][y][x]               = 1
+      try:
+        mat_s[j][int(y/4)][int(x/4)] = 1
+        mat_m[j][int(y/2)][int(x/2)] = 1
+        mat_l[j][y][x]               = 1
+      except IndexError:
+        pass
 
       mat_s[j,:,:] = scipy.ndimage.gaussian_filter(np.array(mat_s[j,:,:]), sigma = 2)*30
       mat_m[j,:,:] = scipy.ndimage.gaussian_filter(np.array(mat_m[j,:,:]), sigma = 3)*80
