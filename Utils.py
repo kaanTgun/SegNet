@@ -10,6 +10,12 @@ import json
 import os
 import cv2
 
+def weighted_loss(model, outputs, labels):
+	weighted_filter = torch.ones(outputs.size(), dtype=torch.int32, device=model.device) * 0.1
+	loss = ((outputs - labels) ** 2)
+	loss = loss * weighted_filter.add(labels).to(model.device)
+	return torch.mean(loss).to(model.device)
+
 
 def pad_to_square(img, pad_value):
 	""" Every input image passed through the network needs to be square, 

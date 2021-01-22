@@ -11,11 +11,6 @@ import numpy as np
 import json
 import os
 
-def weighted_loss(outputs, labels):
-	weighted_filter = torch.ones(outputs.size(), dtype=torch.int32, device=model.device) * 0.1
-	loss = ((outputs - labels) ** 2)
-	loss = loss * weighted_filter.add(labels).to(model.device)
-	return torch.mean(loss).to(model.device)
 
 def train():
 	"""
@@ -32,13 +27,12 @@ def train():
 
 	V_img_Folder = "/content/Hands_ex/Validation"
 	V_txt_File = "/content/Hands_ex/Validation/val_set.txt"
-	img_Size = 180
 
 	OUTPUT_PATH 	= "Model"
 	LOG_LOSS_DIR 	= "Loss"
 	LOG_LOSS_T_PATH = "Loss/Train"
 	LOG_LOSS_V_PATH = "Loss/Validate"
-	SAVE_MODEL_EVERY_N_EPOC = 2
+	SAVE_MODEL_EVERY_N_EPOC = 1
 
 	###########
 	if not os.path.exists(OUTPUT_PATH):
@@ -48,14 +42,15 @@ def train():
 		os.mkdir(LOG_LOSS_T_PATH)
 		os.mkdir(LOG_LOSS_V_PATH)
 
-	train_dataset = Structured_Dataset(txt_file=T_txt_File, root_dir=T_img_Folder, image_size=img_Size)
-	val_dataset   = Structured_Dataset(txt_file=V_txt_File, root_dir=V_img_Folder, image_size=img_Size)
+	train_dataset = Structured_Dataset(txt_file=T_txt_File, root_dir=T_img_Folder, image_size=INPUT_IMAGE_SIZE)
+	val_dataset   = Structured_Dataset(txt_file=V_txt_File, root_dir=V_img_Folder, image_size=INPUT_IMAGE_SIZE)
 
 	train_data_loader = torch.utils.data.DataLoader(train_dataset, batch_size=6, shuffle=True)
 	val_data_loader   = torch.utils.data.DataLoader(val_dataset, batch_size=6, shuffle=True)
 
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
 	model = SegNet(3,22).to(device)
+	model_location = next(model.parameters()).device
 
 	optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 	mse = torch.nn.MSELoss(reduction = 'mean')
@@ -68,7 +63,7 @@ def train():
 		model.train(True)
 		for i, batch in enumerate(train_data_loader):
 			labels, imageLs = batch
-			imageLs = imageLs.float().to(model.device)
+			imageLs = imageLs.float().to(model_location)
 			# reset gradients
 			optimizer.zero_grad()
 
@@ -76,7 +71,7 @@ def train():
 			outputs = model(imageLs)
 			loss = 0
 			for o,l in zip(outputs, labels):
-				loss += weighted_loss(outputs=o, labels=l.to(model.device))
+				loss += mse(o, l.to(model_location))
 
 			writer.add_scalar(LOG_LOSS_T_PATH, loss, epoch)
 			loss.backward()
@@ -89,13 +84,13 @@ def train():
 		model.train(False)
 		for i, batch in enumerate(val_data_loader):
 			labels, imageLs = batch
-			imageLs = imageLs.float().to(model.device)
+			imageLs = imageLs.float().to(model_location)
 			outputs = model(imageLs)
 
 			loss = 0
 			for o,l in zip(outputs, labels):
-				loss += weighted_loss(outputs=o, labels=l.to(model.device))
-				#loss += mse(o, l.cuda())
+				#loss += weighted_loss(outputs=o, labels=l.to(model_location))
+				loss += mse(o, l.to(model_location))
 
 			writer.add_scalar(LOG_LOSS_V_PATH, loss, epoch)
 			if i % 100 == 0: 
@@ -112,7 +107,5 @@ def train():
 	# tensorboard --logdir=runs		http://localhost:6006/
 
 
-def eval():
-	
-
 if __name__ == "__main__":
+	train()
