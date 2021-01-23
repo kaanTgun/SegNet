@@ -124,12 +124,8 @@ class SegNet(nn.Module):
 		self.out_1_medium = nn.Conv2d(D_out, D_out, 1, stride=1)
 		self.out_1_large = nn.Conv2d(D_out, D_out, 1, stride=1)
 
-		self.out_2_small = nn.Conv2d(D_out, D_out, 1, stride=1)
-		self.out_2_medium = nn.Conv2d(D_out, D_out, 1, stride=1)
-		self.out_2_large = nn.Conv2d(D_out, D_out, 1, stride=1)
-
 		self.relu = nn.ReLU(inplace=True)
-		self.prelu = nn.PReLU()
+		self.sigmoid = nn.Sigmoid()
 
 	def forward(self, x):
 				
@@ -165,16 +161,12 @@ class SegNet(nn.Module):
 		cat_l = out_cnt_1_1 + out_cnt_1_2
 
 		out_1_small = self.out_1_small(cat_s)
-		out_1_medium = self.out_1_small(cat_m)
-		out_1_large = self.out_1_small(cat_l)
+		out_1_medium = self.out_1_medium(cat_m)
+		out_1_large = self.out_1_large(cat_l)
 
-		out_1_small = self.prelu(out_1_small)
-		out_1_medium = self.prelu(out_1_medium)
-		out_1_large = self.prelu(out_1_large)
+		out_small = self.sigmoid(out_1_small)
+		out_medium = self.sigmoid(out_1_medium)
+		out_large = self.sigmoid(out_1_large)
 
-		out_2_small =  self.out_2_small(out_1_small )
-		out_2_medium = self.out_2_medium(out_1_medium)
-		out_2_large =  self.out_2_large(out_1_large )
-
-		return (out_2_small, out_2_medium, out_2_large)
+		return (out_small, out_medium, out_large)
 
