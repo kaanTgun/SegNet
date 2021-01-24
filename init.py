@@ -19,7 +19,7 @@ def train():
 	# Hyperparameters
 	BATCH_SIZE 		 = 24
 	INPUT_IMAGE_SIZE = 128
-	EPOCS 			 = 6
+	EPOCS 			 	= 6
 
 	# Training data setup
 	T_img_Folder = "/content/Hands_ex/Training"
@@ -46,7 +46,7 @@ def train():
 	val_dataset   = Structured_Dataset(txt_file=V_txt_File, root_dir=V_img_Folder, image_size=INPUT_IMAGE_SIZE)
 
 	train_data_loader = torch.utils.data.DataLoader(train_dataset, batch_size=BATCH_SIZE, num_workers=4, shuffle=True)
-	val_data_loader   = torch.utils.data.DataLoader(val_dataset, batch_size=BATCH_SIZE,num_workers=4, shuffle=True)
+	val_data_loader   = torch.utils.data.DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
 	model = SegNet(3,22).to(device)
@@ -56,7 +56,6 @@ def train():
 	writer = SummaryWriter()
 
 	for epoch in range(EPOCS):
-
 		# Train
 		model.train(True)
 		for i, batch in enumerate(train_data_loader):
@@ -79,36 +78,41 @@ def train():
 				print(f"{epoch}-{i} Training Loss: {loss}")
 			
 			if (i % 1000) == 0:
-				OUTPUT_path = f'{OUTPUT_PATH}/Weights_E_{epoch}_i_{i}_loss_{loss}.pt'
-				torch.save(model, OUTPUT_path)
+				modelOutput_path = f'{OUTPUT_PATH}/Weights_E_{epoch}_i_{i}_loss_{loss}.pt'
+				torch.save(model, modelOutput_path)
 				writer.flush()
 
 
 		# Validate
 		model.train(False)
-		for i, batch in enumerate(val_data_loader):
-			labels, imageLs = batch
-			imageLs = imageLs.float().to(model_location)
-			outputs = model(imageLs)
+		optimizer.zero_grad()
+		with torch.no_grad():
+			for i, batch in enumerate(val_data_loader):
+				optimizer.zero_grad()
+				labels, imageLs = batch
+				imageLs = imageLs.float().to(model_location)
+				outputs = model(imageLs)
 
-			loss = 0
-			for o,l in zip(outputs, labels):
-				loss += weighted_loss(model_location, outputs=o, labels=l.to(model_location))
+				loss = 0
+				for o,l in zip(outputs, labels):
+					loss += weighted_loss(model_location, outputs=o, labels=l.to(model_location))
 
-			writer.add_scalar(LOG_LOSS_V_PATH, loss, epoch)
-			if i % 10 == 0: 
-				print(f"{epoch}-{i} Validation Loss: {loss}")
+				writer.add_scalar(LOG_LOSS_V_PATH, loss, epoch)
+				if i % 10 == 0: 
+					print(f"{epoch}-{i} Validation Loss: {loss}")
 
 		writer.flush()
 
 	if (epoch % SAVE_MODEL_EVERY_N_EPOC) == 0:
-		OUTPUT_path = f'{OUTPUT_PATH}/Weights_{epoch}_loss_{loss}.pt'
-		torch.save(model, OUTPUT_path)
+		modelOutput_path = f'{OUTPUT_PATH}/Weights_{epoch}_loss_{loss}.pt'
+		torch.save(model, modelOutput_path)
 
 	print("__done__")
 	writer.close()
-	# tensorboard --logdir=runs		http://localhost:6006/
-
 
 if __name__ == "__main__":
 	train()
+
+
+
+	# tensorboard --logdir=runs		http://localhost:6006/
