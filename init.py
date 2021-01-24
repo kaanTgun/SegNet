@@ -96,7 +96,7 @@ def train():
 				loss += weighted_loss(model_location, outputs=o, labels=l.to(model_location))
 
 			writer.add_scalar(LOG_LOSS_V_PATH, loss, epoch)
-			if i % 100 == 0: 
+			if i % 10 == 0: 
 				print(f"{epoch}-{i} Validation Loss: {loss}")
 
 		writer.flush()
