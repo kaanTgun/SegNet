@@ -162,8 +162,6 @@ class SegNet(nn.Module):
 		cat_s = torch.cat((out_cnt_3_1, out_cnt_3_2), 1)
 		cat_m = torch.cat((out_cnt_2_1, out_cnt_2_2), 1)
 		cat_l = torch.cat((out_cnt_1_1, out_cnt_1_2), 1)
-		print(cat_s.shape)
-
 
 		out_small = self.conv_out_small(cat_s)
 		out_medium = self.conv_out_medium(cat_m)
