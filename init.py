@@ -17,16 +17,17 @@ def train():
 	Train Model
 	"""
 	# Hyperparameters
-	BATCH_SIZE 		 = 24
+	BATCH_SIZE 		 = 2
 	INPUT_IMAGE_SIZE = 128
 	EPOCS 			 	= 6
+	NUM_WORKERS = 1
 
 	# Training data setup
-	T_img_Folder = "/content/Hands_ex/Training"
-	T_txt_File = "/content/Hands_ex/Training/train_set.txt"
+	T_img_Folder = "Hands_ex/Training"
+	T_txt_File = "Hands_ex/Training/train_set.txt"
 
-	V_img_Folder = "/content/Hands_ex/Validation"
-	V_txt_File = "/content/Hands_ex/Validation/val_set.txt"
+	V_img_Folder = "Hands_ex/Validation"
+	V_txt_File = "Hands_ex/Validation/val_set.txt"
 
 	OUTPUT_PATH 	= "Model"
 	LOG_LOSS_DIR 	= "Loss"
@@ -45,7 +46,7 @@ def train():
 	train_dataset = Structured_Dataset(txt_file=T_txt_File, root_dir=T_img_Folder, image_size=INPUT_IMAGE_SIZE)
 	val_dataset   = Structured_Dataset(txt_file=V_txt_File, root_dir=V_img_Folder, image_size=INPUT_IMAGE_SIZE)
 
-	train_data_loader = torch.utils.data.DataLoader(train_dataset, batch_size=BATCH_SIZE, num_workers=4, shuffle=True)
+	train_data_loader = torch.utils.data.DataLoader(train_dataset, batch_size=BATCH_SIZE, num_workers=NUM_WORKERS, shuffle=True)
 	val_data_loader   = torch.utils.data.DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
@@ -112,7 +113,6 @@ def train():
 
 if __name__ == "__main__":
 	train()
-
 
 
 	# tensorboard --logdir=runs		http://localhost:6006/
