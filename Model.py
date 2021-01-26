@@ -108,20 +108,21 @@ class SegNet(nn.Module):
 		self.identity_3_3 = identity_block(512, [512,512,512,256], output=True )
 
 		self.deconv_4_1 = nn.ConvTranspose2d(512, 256, 3,  stride=1, padding=1)
-		self.identity_4_2 = identity_block(256, [256,512,256])
-		self.identity_4_3 = identity_block(256, [256,512,256,256], output=True )
+		self.identity_4_2 = identity_block(256, [256,512,256,256], output=True )
 
 		self.deconv_5_1 = nn.ConvTranspose2d(256, 128, 3,  stride=2, padding=1, output_padding=1)
-		self.identity_5_2 = identity_block(128, [128,256,128])
-		self.identity_5_3 = identity_block(128, [128,256,128,128], output=True)
+		self.identity_5_2 = identity_block(128, [128,256,128,128], output=True)
 
 		self.deconv_6_1 = nn.ConvTranspose2d(128, 128, 3,  stride=2, padding=1, output_padding=1)
-		self.identity_6_2 = identity_block(128, [128,256,128])
-		self.identity_6_3 = identity_block(128, [128,256,128,128], output=True )
+		self.identity_6_2 = identity_block(128, [128,256,128,128], output=True )
 
-		self.conv_out_small = nn.Conv2d(256*2, D_out, 1, stride=1)
-		self.conv_out_medium = nn.Conv2d(128*2, D_out, 1, stride=1)
-		self.conv_out_large = nn.Conv2d(128*2, D_out, 1, stride=1)
+		self.conv_small 	= nn.Conv2d(256*2, 128, 3, stride=1, padding=1)
+		self.conv_medium 	= nn.Conv2d(128*2, 128, 3, stride=1, padding=1)
+		self.conv_large 	= nn.Conv2d(128*2, 128, 3, stride=1, padding=1)
+
+		self.conv_out_small 	= nn.Conv2d(128, D_out, 1, stride=1)
+		self.conv_out_medium 	= nn.Conv2d(128, D_out, 1, stride=1)
+		self.conv_out_large 	= nn.Conv2d(128, D_out, 1, stride=1)
 
 		self.relu = nn.ReLU(inplace=True)
 		self.sigmoid = nn.Sigmoid()
@@ -143,29 +144,30 @@ class SegNet(nn.Module):
 
 		y_deconv = self.deconv_4_1(y)
 		y = self.relu(y_deconv)
-		y = self.identity_4_2(y)
-		y, out_skip_4_1 = self.identity_4_3(y)
+		y, out_skip_4_1 = self.identity_4_2(y)
 		out_cnt_3_2 = self.relu(out_skip_4_1 + y_deconv)
 
 		y_deconv = self.deconv_5_1(y)
 		y = self.relu(y_deconv)
-		y = self.identity_5_2(y)
-		y, out_skip_5_1 = self.identity_5_3(y)
+		y, out_skip_5_1 = self.identity_5_2(y)
 		out_cnt_2_2 = self.relu(out_skip_5_1 + y_deconv)
 
 		y_deconv = self.deconv_6_1(y)
 		y = self.relu(y_deconv)
-		y = self.identity_6_2(y)
-		y, out_skip_6_1 = self.identity_6_3(y)
+		y, out_skip_6_1 = self.identity_6_2(y)
 		out_cnt_1_2 = self.relu(out_skip_6_1 + y_deconv)
 
 		cat_s = torch.cat((out_cnt_3_1, out_cnt_3_2), 1)
 		cat_m = torch.cat((out_cnt_2_1, out_cnt_2_2), 1)
 		cat_l = torch.cat((out_cnt_1_1, out_cnt_1_2), 1)
 
-		out_small = self.conv_out_small(cat_s)
-		out_medium = self.conv_out_medium(cat_m)
-		out_large = self.conv_out_large(cat_l)
+		conv_small  = self.relu(self.conv_small(cat_s))
+		conv_medium = self.relu(self.conv_medium(cat_m))
+		conv_large  = self.relu(self.conv_large(cat_l))
+
+		out_small 	= self.conv_out_small(conv_small)
+		out_medium 	= self.conv_out_medium(conv_medium)
+		out_large 	= self.conv_out_large(conv_large)
 
 		out_small = self.sigmoid(out_small)
 		out_medium = self.sigmoid(out_medium)

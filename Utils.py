@@ -10,6 +10,16 @@ import json
 import os
 import cv2
 
+
+def create_log_folders(OUTPUT_PATH, LOG_LOSS_DIR, LOG_LOSS_T_PATH, LOG_LOSS_V_PATH):
+	if not os.path.exists(OUTPUT_PATH):
+			os.mkdir(OUTPUT_PATH)
+	if not os.path.exists(LOG_LOSS_DIR):
+		os.mkdir(LOG_LOSS_DIR)
+		os.mkdir(LOG_LOSS_T_PATH)
+		os.mkdir(LOG_LOSS_V_PATH)
+
+
 def weighted_loss(device, outputs, labels, weight=0.65):
 	batch, filters, w, h = tuple(outputs.shape)
 	weighted_filter = torch.ones((batch, filters-1, w, h), dtype=torch.int32, device=device) * weight

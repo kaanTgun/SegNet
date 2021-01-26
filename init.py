@@ -1,4 +1,5 @@
 from Model import SegNet
+import Utils
 from Utils import Structured_Dataset, weighted_loss
 
 import torch
@@ -20,7 +21,7 @@ def train():
 	BATCH_SIZE 		 = 2
 	INPUT_IMAGE_SIZE = 128
 	EPOCS 			 	= 6
-	NUM_WORKERS = 1
+	NUM_WORKERS 	= 1
 
 	# Training data setup
 	T_img_Folder = "Hands_ex/Training"
@@ -35,13 +36,7 @@ def train():
 	LOG_LOSS_V_PATH = "Loss/Validate"
 	SAVE_MODEL_EVERY_N_EPOC = 1
 
-	###########
-	if not os.path.exists(OUTPUT_PATH):
-		os.mkdir(OUTPUT_PATH)
-	if not os.path.exists(LOG_LOSS_DIR):
-		os.mkdir(LOG_LOSS_DIR)
-		os.mkdir(LOG_LOSS_T_PATH)
-		os.mkdir(LOG_LOSS_V_PATH)
+	Utils.create_log_folders(OUTPUT_PATH, LOG_LOSS_DIR, LOG_LOSS_T_PATH, LOG_LOSS_V_PATH)
 
 	train_dataset = Structured_Dataset(txt_file=T_txt_File, root_dir=T_img_Folder, image_size=INPUT_IMAGE_SIZE)
 	val_dataset   = Structured_Dataset(txt_file=V_txt_File, root_dir=V_img_Folder, image_size=INPUT_IMAGE_SIZE)
@@ -81,7 +76,7 @@ def train():
 			if (i % 1000) == 0:
 				modelOutput_path = f'{OUTPUT_PATH}/Weights_E_{epoch}_i_{i}_loss_{loss}.pt'
 				torch.save(model, modelOutput_path)
-				writer.flush()
+				writer.flush() # Flushes the event file to disk
 
 
 		# Validate

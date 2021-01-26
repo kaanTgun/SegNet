@@ -2,12 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def visualize2(original, s, m, l, s_pred, m_pred, l_pred):
+def visualize(original, s, m, l, s_pred, m_pred, l_pred):
 	""" Visualize RGB image and labeled annotations with predicted annotations by the model.
 	A visual aid function to determine how the model is performing 
 
 	Args:
-			original (np_tensor): original RGB Image
+			original (np_tensor): Original RGB Image
 			s (np_tensor): Small labeled annotations
 			m (np_tensor): Mid labeled annotations
 			l (np_tensor): Large labeled annotations
@@ -41,15 +41,15 @@ def visualize2(original, s, m, l, s_pred, m_pred, l_pred):
 	plt.title('L Pred image')
 	plt.imshow(l_pred)
 
-def testModel(dataObj, index):
+def test_model(model, dataObj, index):
 	""" Test the currnet model with Test data by passing an image and visually determin how the trained model is doing
 
 	Args:
-			dataObj (Dataset): Preset Structured_Dataset class object for input data 
-			index (int): Batch index in the test dataset object 
+			model		(Torch Tensor):	 	Trained Model
+			dataObj (Dataset): 				Preset Structured_Dataset class object for input data 
+			index 	(int): 						Batch index in the test dataset object 
 	"""
 	(s,m,l), img = dataObj.__getitem__(index)
-	img = img.permute(1,2,0)
 	img = img.float().unsqueeze(0)
 	
 	if next(model.parameters()).is_cuda:
@@ -62,6 +62,9 @@ def testModel(dataObj, index):
 	m_pred = m_pred.detach().numpy()
 	l_pred = l_pred.detach().numpy()
 
+	img = img.float().squeeze(0)
+	img = img.permute(1,2,0)
+
 	for j in range(22):
-		visualize2(img, s[j], m[j], l[j], s_pred[j], m_pred[j], l_pred[j])
+		visualize(img, s[j], m[j], l[j], s_pred[j], m_pred[j], l_pred[j])
 		k = np.array(s[j])
