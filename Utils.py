@@ -4,6 +4,7 @@ from torch import nn
 
 from skimage import io, transform
 import scipy
+import sklearn
 import numpy as np
 
 import json
@@ -13,33 +14,31 @@ import cv2
 
 def create_log_folders(OUTPUT_PATH, LOG_LOSS_DIR, LOG_LOSS_T_PATH, LOG_LOSS_V_PATH):
 	if not os.path.exists(OUTPUT_PATH):
-			os.mkdir(OUTPUT_PATH)
+		os.mkdir(OUTPUT_PATH)
 	if not os.path.exists(LOG_LOSS_DIR):
 		os.mkdir(LOG_LOSS_DIR)
 		os.mkdir(LOG_LOSS_T_PATH)
 		os.mkdir(LOG_LOSS_V_PATH)
 
-
-def weighted_loss(device, outputs, labels, weight=0.65):
+def weighted_loss(device, outputs, labels, weight=0.85):
 	batch, filters, w, h = tuple(outputs.shape)
 	weighted_filter = torch.ones((batch, filters-1, w, h), dtype=torch.int32, device=device) * weight
-	weighted_filter = torch.cat((torch.ones((batch, 1, w, h), dtype=torch.int32, device=device), weighted_filter), 1 ) # experimental 
+	weighted_filter = torch.cat((torch.ones((batch, 1, w, h), dtype=torch.int32, device=device), weighted_filter), 1 )
 	loss = ((outputs - labels) ** 2)
 	loss = loss * weighted_filter.add(labels).to(device)
 	return torch.mean(loss).to(device)
-
 
 def pad_to_square(img, pad_value):
 	""" Every input image passed through the network needs to be square, 
 	This function adds padding around the cropped if the image is not a perfect square
 
 	Args:
-			img (np_tensor): original RGB image
-			pad_value (int): the pixal value passed is the padding
+			img (np_tensor): Original RGB image
+			pad_value (int): The pixal value passed is the padding
 
 	Returns:
-			image, padding : return a tuple of already padded image and padding, 
-												padding is needed to offset the annotations wrt padding
+			image, padding : Return a tuple of already padded image and padding, 
+											 Padding is needed to offset the annotations wrt padding
 	"""
 	c, h, w = img.shape
 	dim_diff = np.abs(h - w)
@@ -63,7 +62,6 @@ class Structured_Dataset(Dataset):
 
 	def __len__(self):
 		return len(self.file_data)
-
 
 	def __getitem__(self, idx):
 
@@ -99,16 +97,20 @@ class Structured_Dataset(Dataset):
 			x, y = int(x*img_sf_w), int(y*img_sf_h)
 
 			try:
-				mat_s[j][int(y/4)][int(x/4)] = 1.2
-				mat_m[j][int(y/2)][int(x/2)] = 1.3
-				mat_l[j][y][x]               = 2
+				mat_s[j][int(y/4)][int(x/4)] = 1
+				mat_m[j][int(y/2)][int(x/2)] = 1
+				mat_l[j][y][x]               = 1
 			except IndexError:
 				# print(f"IndexError: {img_path}, (x,y):{x},{y}")
 				pass
 
-			mat_s[j,:,:] = scipy.ndimage.gaussian_filter(np.array(mat_s[j,:,:]), sigma = 1.5)*20
-			mat_m[j,:,:] = scipy.ndimage.gaussian_filter(np.array(mat_m[j,:,:]), sigma = 2.5)*50
-			mat_l[j,:,:] = scipy.ndimage.gaussian_filter(np.array(mat_l[j,:,:]), sigma = 3)*100
+			mat_s[j,:,:] = scipy.ndimage.gaussian_filter(np.array(mat_s[j,:,:]), sigma = 1.5)
+			mat_m[j,:,:] = scipy.ndimage.gaussian_filter(np.array(mat_m[j,:,:]), sigma = 2.5)
+			mat_l[j,:,:] = scipy.ndimage.gaussian_filter(np.array(mat_l[j,:,:]), sigma = 3)
+
+			sklearn.preprocessing.normalize(mat_s[j,:,:], norm='l2', copy=False)
+			sklearn.preprocessing.normalize(mat_m[j,:,:], norm='l2', copy=False)
+			sklearn.preprocessing.normalize(mat_l[j,:,:], norm='l2', copy=False)
 		
 		mat_s[j+1,:,:] = np.ones((self.image_size//4, self.image_size//4)) -  np.clip(np.sum(mat_s,axis=0), 0, 1) 
 		mat_m[j+1,:,:] = np.ones((self.image_size//2, self.image_size//2)) -  np.clip(np.sum(mat_m,axis=0), 0, 1) 

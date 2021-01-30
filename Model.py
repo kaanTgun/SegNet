@@ -2,10 +2,21 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
 import torchsummary
-import numpy as np
 
+import numpy as np
+import os
+
+def load_resnet50(MODEL_PATH):
+	if not os.path.exists(MODEL_PATH):
+		os.mkdir(MODEL_PATH)
+		resnet50 = torch.hub.load('pytorch/vision:v0.6.0', 'resnet18', pretrained=True)
+		torch.save(resnet50, f"{MODEL_PATH}/resnet50.pth")
+		
+	if os.path.exists(f"{MODEL_PATH}/resnet50.pth"):
+		return torch.load(f"{MODEL_PATH}/resnet50.pth")
+
+load_resnet50("Weights")
 class identity_block(nn.Module):
-	
 	def __init__(self, in_channels, filters, output = False, adjust_size=False):
 		super(identity_block, self).__init__()  
 		
@@ -93,13 +104,18 @@ class SegNet(nn.Module):
 		# D_in: 3-channels
 		# D_out: # of segmentations
 
-		self.header = nn.Sequential(nn.Conv2d(in_channels= D_in, out_channels= 128, kernel_size=7, stride=1, padding=3),\
-																nn.BatchNorm2d(128),\
-																nn.ReLU())
-		self.identity_1_1 = identity_block(in_channels=128, filters=[128,256,128])
-		self.identity_1_2 = identity_block(128, [256,512,128,128], output=True )
+		
+		model = load_resnet50("Weights")
+		self.backbone = torch.nn.Sequential(*(list(model.children())[:-1]))
 
-		self.conv_2_1 = conv_block(128, [256,512,256])
+
+		self.header = nn.Sequential(nn.Conv2d(in_channels= D_in, out_channels= 64, kernel_size=7, stride=2),\
+																nn.MaxPool2d(kernel_size=3, stride=2 ),\
+																nn.ReLU())
+		self.identity_1_1 = identity_block(in_channels=64, filters=[64,64,256])
+		self.identity_1_3 = identity_block(256, [64,64,256,64], output=True)
+
+		self.conv_2_1 = conv_block(256, [128,128,512])
 		self.identity_2_2 = identity_block(256, [256,512,256])
 		self.identity_2_3 = identity_block(256, [256,512,256,128], output=True )
 
@@ -169,9 +185,9 @@ class SegNet(nn.Module):
 		out_medium 	= self.conv_out_medium(conv_medium)
 		out_large 	= self.conv_out_large(conv_large)
 
-		out_small = self.sigmoid(out_small)
-		out_medium = self.sigmoid(out_medium)
-		out_large = self.sigmoid(out_large)
+		out_small 	= self.sigmoid(out_small)
+		out_medium 	= self.sigmoid(out_medium)
+		out_large 	= self.sigmoid(out_large)
 
 		return (out_small, out_medium, out_large)
 

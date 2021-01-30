@@ -44,24 +44,25 @@ def train():
 	train_data_loader = torch.utils.data.DataLoader(train_dataset, batch_size=BATCH_SIZE, num_workers=NUM_WORKERS, shuffle=True)
 	val_data_loader   = torch.utils.data.DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
+
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
 	model = SegNet(3,22).to(device)
 	model_location = next(model.parameters()).device
 
-	optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+	optimizer = torch.optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
 	writer = SummaryWriter()
 
 	for epoch in range(EPOCS):
 		# Train
 		model.train(True)
 		for i, batch in enumerate(train_data_loader):
-			labels, imageLs = batch
-			imageLs = imageLs.float().to(model_location)
-			# reset gradients
+			labels, images = batch
+			images = images.float().to(model_location)
+			# Reset gradients
 			optimizer.zero_grad()
 
-			# forward + backward + optimize
-			outputs = model(imageLs)
+			# Forward -> Loss -> Backprop -> Optimize
+			outputs = model(images)
 			loss = 0
 			for o,l in zip(outputs, labels):
 				loss += weighted_loss(model_location, outputs=o, labels=l.to(model_location))
@@ -85,9 +86,9 @@ def train():
 		with torch.no_grad():
 			for i, batch in enumerate(val_data_loader):
 				optimizer.zero_grad()
-				labels, imageLs = batch
-				imageLs = imageLs.float().to(model_location)
-				outputs = model(imageLs)
+				labels, images = batch
+				images = images.float().to(model_location)
+				outputs = model(images)
 
 				loss = 0
 				for o,l in zip(outputs, labels):
