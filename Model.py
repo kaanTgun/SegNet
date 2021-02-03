@@ -136,7 +136,7 @@ class SegNet(nn.Module):
 			self.identity_deep_4_2 = identity_block(256, [256,512,256] )
 			self.identity_deep_4_3 = identity_block(256, [256,512,256] )
 
-			self.conv_small 			= nn.Conv2d(256*2, 128, 3, stride=2, padding=1)
+			self.conv_small 			= nn.Conv2d(256*2, 128, 3, stride=1, padding=1)
 			self.conv_out_small 	= nn.Conv2d(128, D_out, 1, stride=1)
 
 		self.deconv_4_1 	= nn.ConvTranspose2d(256, 256, 3,  stride=2, padding=1, output_padding=1)
@@ -209,9 +209,3 @@ class SegNet(nn.Module):
 		out_large 	= self.sigmoid(out_large)								#128
 
 		return (out_small, out_medium, out_large)
-
-
-from torchsummary import summary
-
-model 	= SegNet(3, 22, deeper=True)
-summary(model, (3, 128, 128))

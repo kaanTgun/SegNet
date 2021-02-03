@@ -5,6 +5,7 @@ from torch import nn
 from skimage import io, transform
 import scipy
 import sklearn
+from sklearn import preprocessing
 import numpy as np
 
 import json

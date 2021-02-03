@@ -13,7 +13,7 @@ def train():
 	Train Model
 	"""
 	# Hyperparameters
-	BATCH_SIZE 		 		= 22
+	BATCH_SIZE 		 		= 16
 	INPUT_IMAGE_SIZE 	= 128
 	EPOCS 			 			= 6
 	NUM_WORKERS 			= 4
@@ -40,7 +40,7 @@ def train():
 	val_data_loader   = torch.utils.data.DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
 	device 	= torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
-	model 	= SegNet(3,22).to(device)
+	model 	= SegNet(3,22, deeper=True).to(device)
 	model_location = next(model.parameters()).device
 
 	loss_function = torch.nn.MSELoss()
