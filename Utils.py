@@ -5,7 +5,7 @@ from torch import nn
 from skimage import io, transform
 import scipy
 import sklearn
-from sklearn import preprocessing
+from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 
 import json
@@ -90,6 +90,8 @@ class Structured_Dataset(Dataset):
 		mat_m = np.full((len(joints) +1, self.image_size//2, self.image_size//2),0 , np.float32)
 		mat_l = np.full((len(joints) +1, self.image_size,    self.image_size   ),0 , np.float32)
 
+		scaler = MinMaxScaler()
+
 		for j, joint in enumerate(joints):
 			x,y,f = joint
 			if f != 2: continue
@@ -98,24 +100,28 @@ class Structured_Dataset(Dataset):
 			x, y = int(x*img_sf_w), int(y*img_sf_h)
 
 			try:
-				mat_s[j][int(y/4)][int(x/4)] = 1
-				mat_m[j][int(y/2)][int(x/2)] = 1
-				mat_l[j][y][x]               = 1
+				mat_s[j][int(y/4)][int(x/4)] = 2
+				mat_m[j][int(y/2)][int(x/2)] = 2
+				mat_l[j][y][x]               = 2
 			except IndexError:
 				# print(f"IndexError: {img_path}, (x,y):{x},{y}")
 				pass
 
-			mat_s[j,:,:] = scipy.ndimage.gaussian_filter(np.array(mat_s[j,:,:]), sigma = 1.5)
-			mat_m[j,:,:] = scipy.ndimage.gaussian_filter(np.array(mat_m[j,:,:]), sigma = 2.5)
-			mat_l[j,:,:] = scipy.ndimage.gaussian_filter(np.array(mat_l[j,:,:]), sigma = 3)
+			mat_s[j,:,:] = scipy.ndimage.gaussian_filter(np.array(mat_s[j,:,:]), sigma = 2)
+			mat_m[j,:,:] = scipy.ndimage.gaussian_filter(np.array(mat_m[j,:,:]), sigma = 3)
+			mat_l[j,:,:] = scipy.ndimage.gaussian_filter(np.array(mat_l[j,:,:]), sigma = 5)
 
-			sklearn.preprocessing.normalize(mat_s[j,:,:], norm='l2', copy=False)
-			sklearn.preprocessing.normalize(mat_m[j,:,:], norm='l2', copy=False)
-			sklearn.preprocessing.normalize(mat_l[j,:,:], norm='l2', copy=False)
+			scaler.fit(mat_s[j,:,:])
+			scaler.fit(mat_m[j,:,:])
+			scaler.fit(mat_l[j,:,:])
 		
 		mat_s[j+1,:,:] = np.ones((self.image_size//4, self.image_size//4)) -  np.clip(np.sum(mat_s,axis=0), 0, 1) 
 		mat_m[j+1,:,:] = np.ones((self.image_size//2, self.image_size//2)) -  np.clip(np.sum(mat_m,axis=0), 0, 1) 
 		mat_l[j+1,:,:] = np.ones((self.image_size   , self.image_size   )) -  np.clip(np.sum(mat_l,axis=0), 0, 1) 
+	
+		scaler.fit(mat_s[j+1,:,:])
+		scaler.fit(mat_m[j+1,:,:])
+		scaler.fit(mat_l[j+1,:,:])
 
 		mat_s = torch.from_numpy(mat_s)
 		mat_m = torch.from_numpy(mat_m)

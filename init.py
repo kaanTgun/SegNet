@@ -13,7 +13,7 @@ def train():
 	Train Model
 	"""
 	# Hyperparameters
-	BATCH_SIZE 		 		= 16
+	BATCH_SIZE 		 		= 20
 	INPUT_IMAGE_SIZE 	= 128
 	EPOCS 			 			= 6
 	NUM_WORKERS 			= 4
